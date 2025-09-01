@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000';
+// Dynamic API base URL - works in both development and production
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? "" // Production: relative paths (same domain)
+  : "http://localhost:3000"; // Development: full localhost URL
 
 // Create axios instance with auth token
 const createAuthAxios = async (token) => {
@@ -18,7 +21,7 @@ export const confessionService = {
   // Get all confessions (public route)
   async getAll() {
     try {
-      const response = await axios.get(`${API_BASE_URL}/confessions`);
+      const response = await axios.get(`${API_BASE_URL}/api/confessions`);
       return response.data;
     } catch (error) {
       console.error('Error fetching confessions:', error);
@@ -30,7 +33,7 @@ export const confessionService = {
   async create(text, token) {
     try {
       const authAxios = await createAuthAxios(token);
-      const response = await authAxios.post('/confessions', { text });
+      const response = await authAxios.post('/api/confessions', { text });
       return response.data;
     } catch (error) {
       console.error('Error creating confession:', error);
@@ -42,7 +45,7 @@ export const confessionService = {
   async update(id, text, token) {
     try {
       const authAxios = await createAuthAxios(token);
-      const response = await authAxios.put(`/confessions/${id}`, { text });
+      const response = await authAxios.put(`/api/confessions/${id}`, { text });
       return response.data;
     } catch (error) {
       console.error('Error updating confession:', error);
@@ -54,7 +57,7 @@ export const confessionService = {
   async delete(id, token) {
     try {
       const authAxios = await createAuthAxios(token);
-      await authAxios.delete(`/confessions/${id}`);
+      await authAxios.delete(`/api/confessions/${id}`);
       return true;
     } catch (error) {
       console.error('Error deleting confession:', error);
@@ -65,7 +68,7 @@ export const confessionService = {
   // Get confession by ID (public route)
   async getById(id) {
     try {
-      const response = await axios.get(`${API_BASE_URL}/confessions/${id}`);
+      const response = await axios.get(`${API_BASE_URL}/api/confessions/${id}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching confession:', error);

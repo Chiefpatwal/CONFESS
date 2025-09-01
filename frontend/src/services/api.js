@@ -1,6 +1,9 @@
 import axios from "axios";
 
-const API_BASE = "http://localhost:3000/confessions";
+// Dynamic API base URL - works in both development and production
+const API_BASE = process.env.NODE_ENV === 'production' 
+  ? "/api/confessions"  // Production: relative path
+  : "http://localhost:3000/api/confessions";  // Development: full localhost URL
 
 // GET confessions with pagination support
 export const getConfessions = async (page = 1, limit = 5) => {
@@ -13,16 +16,15 @@ export const getConfessions = async (page = 1, limit = 5) => {
   }
 };
 
-
 // POST a new confession
 export const postConfession = async (text) => {
   const res = await axios.post(API_BASE, { text }); // userId removed
   return res.data;
 };
 
-// PATCH a confession
+// PUT a confession (changed from PATCH to PUT to match your backend route)
 export const updateConfessionAPI = async (id, text) => {
-  const res = await axios.patch(`${API_BASE}/${id}`, { text });
+  const res = await axios.put(`${API_BASE}/${id}`, { text });
   return res.data;
 };
 
