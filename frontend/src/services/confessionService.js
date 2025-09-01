@@ -5,7 +5,7 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? "" // Production: relative paths (same domain)
   : "http://localhost:3000"; // Development: full localhost URL
 
-// Create axios instance with auth token
+// Create axios instance with auth token - FIXED for Clerk
 const createAuthAxios = async (token) => {
   return axios.create({
     baseURL: API_BASE_URL,
@@ -29,11 +29,18 @@ export const confessionService = {
     }
   },
 
-  // Create new confession (requires auth)
+  // Create new confession (requires auth) - FIXED
   async create(text, token) {
     try {
-      const authAxios = await createAuthAxios(token);
-      const response = await authAxios.post('/api/confessions', { text });
+      const response = await axios.post(`${API_BASE_URL}/api/confessions`, 
+        { text }, 
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       return response.data;
     } catch (error) {
       console.error('Error creating confession:', error);
@@ -41,11 +48,18 @@ export const confessionService = {
     }
   },
 
-  // Update confession (requires auth)
+  // Update confession (requires auth) - FIXED
   async update(id, text, token) {
     try {
-      const authAxios = await createAuthAxios(token);
-      const response = await authAxios.put(`/api/confessions/${id}`, { text });
+      const response = await axios.put(`${API_BASE_URL}/api/confessions/${id}`, 
+        { text },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
       return response.data;
     } catch (error) {
       console.error('Error updating confession:', error);
@@ -53,11 +67,14 @@ export const confessionService = {
     }
   },
 
-  // Delete confession (requires auth)
+  // Delete confession (requires auth) - FIXED
   async delete(id, token) {
     try {
-      const authAxios = await createAuthAxios(token);
-      await authAxios.delete(`/api/confessions/${id}`);
+      await axios.delete(`${API_BASE_URL}/api/confessions/${id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       return true;
     } catch (error) {
       console.error('Error deleting confession:', error);
