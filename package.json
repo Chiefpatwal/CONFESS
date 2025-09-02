@@ -11,14 +11,13 @@
     "dev:backend": "npm run dev --prefix backend",
     "dev:frontend": "npm run start --prefix frontend",
     "clean": "rm -rf frontend/build && rm -rf backend/dist",
-    "postinstall": "echo 'All dependencies installed successfully'"
+    "postbuild": "echo 'Build completed. Frontend build should be in frontend/build/'",
+    "prebuild": "echo 'Starting build process...'",
+    "prestart": "echo 'Starting server...'"
   },
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
-  },
-  "devDependencies": {
-    "concurrently": "^7.6.0"
   },
   "keywords": ["confession", "react", "express", "mongodb", "clerk"],
   "author": "Your Name",

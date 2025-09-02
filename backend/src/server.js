@@ -7,6 +7,7 @@ import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
 import confessionRoutes from "./routes/confessionRoutes.js";
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 // ES module equivalent of __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -87,9 +88,35 @@ console.log('Adding confession routes...');
 app.use('/api/confessions', clerkAuth, confessionRoutes);
 console.log('Confession routes added successfully');
 
-// Serve static files from React build (IMPORTANT: Add this!)
-const buildPath = path.join(__dirname, '../frontend/build');
+// Serve static files from React build (CORRECTED PATH!)
+// In Render, the project structure is different, so we need to find the build folder
+const buildPath = process.env.NODE_ENV === 'production' 
+  ? path.join(process.cwd(), 'frontend/build')  // Production: from project root
+  : path.join(__dirname, '../frontend/build'); // Development: relative to backend
+
+console.log('Current working directory:', process.cwd());
+console.log('__dirname:', __dirname);
 console.log('Looking for React build at:', buildPath);
+
+// Check if build directory exists
+import fs from 'fs';
+if (!fs.existsSync(buildPath)) {
+  console.error('❌ Build directory not found:', buildPath);
+  console.log('Available directories:');
+  try {
+    const dirs = fs.readdirSync(process.cwd());
+    console.log('Root directory contents:', dirs);
+    
+    if (fs.existsSync(path.join(process.cwd(), 'frontend'))) {
+      const frontendContents = fs.readdirSync(path.join(process.cwd(), 'frontend'));
+      console.log('Frontend directory contents:', frontendContents);
+    }
+  } catch (e) {
+    console.error('Error reading directories:', e.message);
+  }
+} else {
+  console.log('✅ Build directory found');
+}
 
 app.use(express.static(buildPath));
 
@@ -111,12 +138,25 @@ app.get('*', (req, res) => {
   // Serve React app for all other routes
   const indexPath = path.join(buildPath, 'index.html');
   console.log('Serving React app from:', indexPath);
+  
+  // Check if index.html exists before trying to serve it
+  if (!fs.existsSync(indexPath)) {
+    console.error('❌ index.html not found at:', indexPath);
+    return res.status(500).json({
+      error: 'Frontend build not found',
+      expectedPath: indexPath,
+      buildPath: buildPath,
+      cwd: process.cwd()
+    });
+  }
+  
   res.sendFile(indexPath, (err) => {
     if (err) {
       console.error('Error serving React app:', err);
       res.status(500).json({
         error: 'Failed to serve frontend',
-        message: err.message
+        message: err.message,
+        path: indexPath
       });
     }
   });
