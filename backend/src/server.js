@@ -2,16 +2,10 @@ import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
 import confessionRoutes from "./routes/confessionRoutes.js";
 
 dotenv.config();
-
-// Get __dirname equivalent for ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
@@ -20,11 +14,11 @@ mongoose.connect(process.env.MONGO_URI)
 
 const app = express();
 
-// CORS configuration - be more specific in production
+// CORS configuration
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? process.env.FRONTEND_URL || true 
-    : ["http://localhost:3000", "http://localhost:5173", "http://localhost:3001"],
+    : ["http://localhost:5000", "http://localhost:5173", "http://localhost:3001"],
   credentials: true
 };
 
@@ -32,41 +26,25 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Clerk middleware
-// Apply Clerk auth middleware only to protected routes
-// Don't apply to all routes since some are public
 const clerkAuth = ClerkExpressWithAuth({
   secretKey: process.env.CLERK_SECRET_KEY,
 });
 
+console.log('Clerk middleware initialized');
+
 // API Routes
-app.get('/api/health', async (req, res) => {
+app.get('/api/health', (req, res) => {
   res.json({ message: 'Server is running', status: 'healthy' });
 });
 
+console.log('Adding confession routes...');
 app.use('/api/confessions', clerkAuth, confessionRoutes);
+console.log('Confession routes added successfully');
 
-// Serve static files from the React app build directory
-if (process.env.NODE_ENV === 'production') {
-  // FIXED: Use environment variable or fallback to relative path
-  const buildPath = process.env.BUILD_PATH || path.join(__dirname, '../frontend/build');
-  
-  console.log('Looking for build files at:', buildPath);
-  
-  // Serve static files from frontend build
-  app.use(express.static(buildPath));
-  
-  // Catch all handler: send back React's index.html file for any non-API routes
-  app.get('*', (req, res) => {
-    const indexPath = path.join(buildPath, 'index.html');
-    console.log('Serving index.html from:', indexPath);
-    res.sendFile(indexPath);
-  });
-} else {
-  // Development route
-  app.get('/', (req, res) => {
-    res.json({ message: 'Server is running in development mode' });
-  });
-}
+// Development route
+app.get('/', (req, res) => {
+  res.json({ message: 'Server is running in development mode' });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -78,13 +56,8 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler for API routes
-app.use('/api/*', (req, res) => {
-  res.status(404).json({ error: 'API route not found' });
-});
-
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5000;
 app.listen(port, '0.0.0.0', () => {
-  console.log(`Server is running on port ${port}`);
+  console.log(`Server with confession routes running on port ${port}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });

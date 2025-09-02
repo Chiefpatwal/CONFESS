@@ -1,5 +1,5 @@
 // Toast notification utilities
-export const showToast = (message, type = 'info', duration = 3000) => {
+export const showToast = (message, type = 'info', duration = 1500) => {
   // Remove any existing toasts
   const existingToasts = document.querySelectorAll('.toast-notification');
   existingToasts.forEach(toast => toast.remove());
