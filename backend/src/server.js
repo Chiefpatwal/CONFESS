@@ -15,13 +15,13 @@ connectDB();
 // Middleware
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true,      // allow cookies & auth headers
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'], // allow all HTTP methods
+  origin: "*",
+  credentials: true,      
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
 }));
 
 app.use(express.json({ limit: '10mb' }));
-app.use(ClerkExpressWithAuth()); // ensures Clerk auth for protected routes
+app.use(ClerkExpressWithAuth()); 
 
 
 // Routes
