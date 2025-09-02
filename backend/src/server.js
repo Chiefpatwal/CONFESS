@@ -46,14 +46,20 @@ app.get('/api/health', async (req, res) => {
 app.use('/api/confessions', clerkAuth, confessionRoutes);
 
 // Serve static files from the React app build directory
-// Adjust the path based on your frontend build location
 if (process.env.NODE_ENV === 'production') {
+  // FIXED: Use environment variable or fallback to relative path
+  const buildPath = process.env.BUILD_PATH || path.join(__dirname, '../frontend/build');
+  
+  console.log('Looking for build files at:', buildPath);
+  
   // Serve static files from frontend build
-  app.use(express.static(path.join(__dirname, '../../frontend/dist')));
+  app.use(express.static(buildPath));
   
   // Catch all handler: send back React's index.html file for any non-API routes
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
+    const indexPath = path.join(buildPath, 'index.html');
+    console.log('Serving index.html from:', indexPath);
+    res.sendFile(indexPath);
   });
 } else {
   // Development route
