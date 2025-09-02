@@ -4,6 +4,7 @@ const API_BASE = process.env.NODE_ENV === 'production'
   ? `${process.env.REACT_APP_API_URL}/api/confessions`
   : "http://localhost:5000/api/confessions";
 
+
 export const getConfessions = async (page = 1, limit = 5) => {
   try {
     const res = await axios.get(`${API_BASE}?page=${page}&limit=${limit}`);
