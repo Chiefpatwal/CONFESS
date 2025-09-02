@@ -13,12 +13,16 @@ const app = express();
 connectDB();
 
 // Middleware
+// Middleware
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-  credentials: true
+  credentials: true,      // allow cookies & auth headers
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'], // allow all HTTP methods
 }));
+
 app.use(express.json({ limit: '10mb' }));
-app.use(ClerkExpressWithAuth());
+app.use(ClerkExpressWithAuth()); // ensures Clerk auth for protected routes
+
 
 // Routes
 app.get('/health', (req, res) => {

@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE = process.env.NODE_ENV === 'production'
-  ? `${process.env.REACT_APP_API_URL}/api/confessions`
+  ? `${process.env.REACT_APP_API_URL}/api/confessions` // correct
   : "http://localhost:5000/api/confessions";
 
 
