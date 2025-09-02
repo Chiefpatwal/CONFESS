@@ -1,9 +1,9 @@
 // confessionService.js - CORRECTED VERSION
 import axios from 'axios';
 
-// API base URL - CORRECTED for your actual deployment
+// API base URL - CORRECTED for single deployment
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? "https://confess-706b.onrender.com" // Your actual Render URL
+  ? window.location.origin // Use same origin in production (single deployment)
   : "http://localhost:5000"; // Development: match your backend port
 
 console.log('API_BASE_URL configured as:', API_BASE_URL);
