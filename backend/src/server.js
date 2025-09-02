@@ -1,3 +1,4 @@
+// server.js - FIXED VERSION
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
@@ -14,12 +15,39 @@ mongoose.connect(process.env.MONGO_URI)
 
 const app = express();
 
-// CORS configuration
+// CORS configuration for separate deployments
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? process.env.FRONTEND_URL || true 
-    : ["http://localhost:5000", "http://localhost:5173", "http://localhost:3001"],
-  credentials: true
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = process.env.NODE_ENV === 'production' 
+      ? [
+          process.env.FRONTEND_URL,
+          // Add your actual frontend domain here
+          'https://your-frontend-domain.com',
+          'https://your-frontend-domain.netlify.app',
+          'https://your-frontend-domain.vercel.app'
+        ].filter(Boolean) // Remove undefined values
+      : [
+          "http://localhost:5000", 
+          "http://localhost:5173", 
+          "http://localhost:3001",
+          "http://localhost:3000"
+        ];
+
+    console.log('CORS check - Origin:', origin, 'Allowed origins:', allowedOrigins);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 app.use(cors(corsOptions));
@@ -32,9 +60,24 @@ const clerkAuth = ClerkExpressWithAuth({
 
 console.log('Clerk middleware initialized');
 
-// API Routes
+// Health check route (should be accessible without auth)
+app.get('/health', (req, res) => {
+  res.json({ 
+    message: 'Server is running', 
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+// API health check
 app.get('/api/health', (req, res) => {
-  res.json({ message: 'Server is running', status: 'healthy' });
+  res.json({ 
+    message: 'API is running', 
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 console.log('Adding confession routes...');
@@ -43,12 +86,33 @@ console.log('Confession routes added successfully');
 
 // Development route
 app.get('/', (req, res) => {
-  res.json({ message: 'Server is running in development mode' });
+  res.json({ 
+    message: 'Confession API Server',
+    status: 'running',
+    environment: process.env.NODE_ENV || 'development',
+    endpoints: {
+      health: '/health',
+      api_health: '/api/health',
+      confessions: '/api/confessions'
+    }
+  });
 });
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
+  
+  // CORS error
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({
+      error: 'CORS error: Origin not allowed',
+      origin: req.get('Origin')
+    });
+  }
+  
   const status = err.status || 500;
   res.status(status).json({
     error: err.message || "Internal Server Error",
@@ -56,8 +120,18 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Handle 404
+app.use('*', (req, res) => {
+  res.status(404).json({
+    error: 'Route not found',
+    path: req.originalUrl,
+    method: req.method
+  });
+});
+
 const port = process.env.PORT || 5000;
 app.listen(port, '0.0.0.0', () => {
-  console.log(`Server with confession routes running on port ${port}`);
+  console.log(`Server running on port ${port}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'Not set'}`);
 });
