@@ -1,14 +1,16 @@
 import axios from "axios";
 
-const API_BASE = process.env.NODE_ENV === 'production' 
-  ? process.env.REACT_APP_API_URL || "/api/confessions"
-  : "http://localhost:5000/api/confessions";
+const API_BASE =
+  process.env.NODE_ENV === "production"
+    ? "https://confess-706b.onrender.com/api/confessions"
+    : "http://localhost:5000/api/confessions";
 
 export const getConfessions = async (page = 1, limit = 5) => {
   try {
     const res = await axios.get(`${API_BASE}?page=${page}&limit=${limit}`);
     return res.data;
   } catch (err) {
+    console.error(err);
     return { confessions: [], totalPages: 1, totalItems: 0 };
   }
 };
