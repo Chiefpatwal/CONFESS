@@ -18,49 +18,39 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Fetch confessions on component mount
   useEffect(() => {
     fetchConfessions();
   }, []);
 
-  // Fetch all confessions
   const fetchConfessions = async () => {
     try {
       setLoading(true);
       const data = await confessionService.getAll();
       
-      // Normalize the data structure - ensure we always work with an array
       if (Array.isArray(data)) {
         setConfessions(data);
       } else if (data && Array.isArray(data.confessions)) {
         setConfessions(data.confessions);
-      } else if (data && Array.isArray(data.docs)) {
-        setConfessions(data.docs);
       } else {
-        console.warn('Unexpected data structure:', data);
         setConfessions([]);
       }
       
       setError('');
     } catch (err) {
-      console.error('Failed to fetch confessions:', err);
       setError('Failed to load confessions');
-      setConfessions([]); // Ensure we have an array even on error
+      setConfessions([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Create new confession
   const handleCreateConfession = async (text) => {
     try {
       setIsSubmitting(true);
       const token = await getToken();
       const newConfession = await confessionService.create(text, token);
 
-      // Add the new confession to the beginning of the array
       setConfessions((prev) => {
-        // Ensure prev is always an array
         const currentConfessions = Array.isArray(prev) ? prev : [];
         return [newConfession, ...currentConfessions];
       });
@@ -69,7 +59,6 @@ function App() {
       showToast('Confession shared successfully!', 'success');
       setCurrentPage('list');
     } catch (err) {
-      console.error('Failed to post confession:', err);
       setError(err.response?.data?.message || 'Failed to post confession');
       showToast('Failed to share confession', 'error');
     } finally {
@@ -77,7 +66,6 @@ function App() {
     }
   };
 
-  // Update confession
   const handleUpdateConfession = async (id, text) => {
     try {
       const token = await getToken();
@@ -93,22 +81,18 @@ function App() {
       setError('');
       showToast('Confession updated successfully!', 'success');
     } catch (err) {
-      console.error('Failed to update confession:', err);
       setError(err.response?.data?.message || 'Failed to update confession');
       showToast('Failed to update confession', 'error');
       throw err;
     }
   };
 
-  // Delete confession
   const handleDeleteConfession = async (id) => {
     try {
       const token = await getToken();
       await confessionService.delete(id, token);
       
-      // Remove the confession from the array
       setConfessions(prev => {
-        // Ensure prev is always an array
         const currentConfessions = Array.isArray(prev) ? prev : [];
         return currentConfessions.filter(confession => confession._id !== id);
       });
@@ -116,7 +100,6 @@ function App() {
       setError('');
       showToast('Confession deleted successfully!', 'success');
     } catch (err) {
-      console.error('Failed to delete confession:', err);
       setError(err.response?.data?.message || 'Failed to delete confession');
       showToast('Failed to delete confession', 'error');
       throw err;

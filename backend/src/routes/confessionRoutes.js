@@ -5,16 +5,16 @@ import {
   updateConfession, 
   deleteConfession 
 } from '../controllers/confessionController.js';
+import { validateConfessionInput } from '../middlewares/validate.js';
 
 const router = express.Router();
 
-// Public route - anyone can read confessions
+// Public route
 router.get('/', getConfessions);
 
-// Protected routes - authentication is handled by ClerkExpressWithAuth middleware
-// The middleware populates req.auth for all routes, but we check req.auth.userId in controllers
-router.post('/', createConfession);
-router.put('/:id', updateConfession);
+// Protected routes with validation
+router.post('/', validateConfessionInput, createConfession);
+router.put('/:id', validateConfessionInput, updateConfession);
 router.delete('/:id', deleteConfession);
 
 export default router;

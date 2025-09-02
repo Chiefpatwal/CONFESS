@@ -4,28 +4,26 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "dev": "nodemon src/server.js",
-    "start": "node src/server.js"
+    "dev": "nodemon server.js",
+    "start": "node server.js",
+    "build": "echo 'No build step required'",
+    "postinstall": "echo 'Dependencies installed'"
   },
-  "keywords": [],
+  "keywords": ["confession", "api", "express", "mongodb"],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Confession app backend API",
   "dependencies": {
     "@clerk/clerk-sdk-node": "^4.13.23",
-    "@clerk/express": "^1.7.26",
-    "@clerk/nextjs": "^6.31.6",
-    "@prisma/client": "^6.15.0",
-    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.18.0",
-    "pg": "^8.16.3",
-    "prisma": "^6.15.0"
+    "mongoose": "^8.18.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
