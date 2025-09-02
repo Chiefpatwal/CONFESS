@@ -1,10 +1,16 @@
-// server.js - FIXED VERSION
+// server.js - SERVES BOTH FRONTEND AND BACKEND
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import { ClerkExpressWithAuth } from "@clerk/clerk-sdk-node";
 import confessionRoutes from "./routes/confessionRoutes.js";
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ES module equivalent of __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -15,7 +21,7 @@ mongoose.connect(process.env.MONGO_URI)
 
 const app = express();
 
-// CORS configuration for separate deployments
+// CORS configuration - more permissive for single deployment
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, etc.)
@@ -23,12 +29,9 @@ const corsOptions = {
     
     const allowedOrigins = process.env.NODE_ENV === 'production' 
       ? [
+          'https://confess-706b.onrender.com', // Your actual Render URL
           process.env.FRONTEND_URL,
-          // Add your actual frontend domain here
-          'https://your-frontend-domain.com',
-          'https://your-frontend-domain.netlify.app',
-          'https://your-frontend-domain.vercel.app'
-        ].filter(Boolean) // Remove undefined values
+        ].filter(Boolean)
       : [
           "http://localhost:5000", 
           "http://localhost:5173", 
@@ -41,8 +44,8 @@ const corsOptions = {
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.warn('CORS blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
+      // For same-origin requests when serving frontend, allow null origin
+      callback(null, true);
     }
   },
   credentials: true,
@@ -84,22 +87,40 @@ console.log('Adding confession routes...');
 app.use('/api/confessions', clerkAuth, confessionRoutes);
 console.log('Confession routes added successfully');
 
-// Development route
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Confession API Server',
-    status: 'running',
-    environment: process.env.NODE_ENV || 'development',
-    endpoints: {
-      health: '/health',
-      api_health: '/api/health',
-      confessions: '/api/confessions'
-    }
-  });
-});
+// Serve static files from React build (IMPORTANT: Add this!)
+const buildPath = path.join(__dirname, '../frontend/build');
+console.log('Looking for React build at:', buildPath);
+
+app.use(express.static(buildPath));
 
 // Handle preflight requests
 app.options('*', cors(corsOptions));
+
+// Catch-all handler: send back React's index.html file for any non-API routes
+// This MUST come after API routes but before error handlers
+app.get('*', (req, res) => {
+  // Don't serve React app for API routes
+  if (req.path.startsWith('/api/') || req.path.startsWith('/health')) {
+    return res.status(404).json({
+      error: 'API route not found',
+      path: req.originalUrl,
+      method: req.method
+    });
+  }
+  
+  // Serve React app for all other routes
+  const indexPath = path.join(buildPath, 'index.html');
+  console.log('Serving React app from:', indexPath);
+  res.sendFile(indexPath, (err) => {
+    if (err) {
+      console.error('Error serving React app:', err);
+      res.status(500).json({
+        error: 'Failed to serve frontend',
+        message: err.message
+      });
+    }
+  });
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -120,18 +141,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Handle 404
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Route not found',
-    path: req.originalUrl,
-    method: req.method
-  });
-});
-
 const port = process.env.PORT || 5000;
 app.listen(port, '0.0.0.0', () => {
   console.log(`Server running on port ${port}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Frontend URL: ${process.env.FRONTEND_URL || 'Not set'}`);
+  console.log(`Frontend build path: ${buildPath}`);
 });
