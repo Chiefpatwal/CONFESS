@@ -1,4 +1,4 @@
-// server.js - SERVES BOTH FRONTEND AND BACKEND
+// server.js - FIXED VERSION WITH NO DUPLICATE IMPORTS
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
@@ -99,7 +99,6 @@ console.log('__dirname:', __dirname);
 console.log('Looking for React build at:', buildPath);
 
 // Check if build directory exists
-import fs from 'fs';
 if (!fs.existsSync(buildPath)) {
   console.error('❌ Build directory not found:', buildPath);
   console.log('Available directories:');
@@ -123,13 +122,27 @@ app.use(express.static(buildPath));
 // Handle preflight requests
 app.options('*', cors(corsOptions));
 
+// Debug route to help troubleshoot
+app.get('/debug', (req, res) => {
+  res.json({
+    cwd: process.cwd(),
+    dirname: __dirname,
+    nodeEnv: process.env.NODE_ENV,
+    buildPath: buildPath,
+    buildExists: fs.existsSync(buildPath),
+    rootContents: fs.existsSync(process.cwd()) ? fs.readdirSync(process.cwd()) : 'not found',
+    frontendExists: fs.existsSync(path.join(process.cwd(), 'frontend')),
+    frontendBuildExists: fs.existsSync(path.join(process.cwd(), 'frontend/build'))
+  });
+});
+
 // Catch-all handler: send back React's index.html file for any non-API routes
 // This MUST come after API routes but before error handlers
 app.get('*', (req, res) => {
   // Don't serve React app for API routes
-  if (req.path.startsWith('/api/') || req.path.startsWith('/health')) {
+  if (req.path.startsWith('/api/') || req.path.startsWith('/health') || req.path.startsWith('/debug')) {
     return res.status(404).json({
-      error: 'API route not found',
+      error: 'Route not found',
       path: req.originalUrl,
       method: req.method
     });
@@ -146,7 +159,8 @@ app.get('*', (req, res) => {
       error: 'Frontend build not found',
       expectedPath: indexPath,
       buildPath: buildPath,
-      cwd: process.cwd()
+      cwd: process.cwd(),
+      message: 'Please ensure the frontend build was created successfully'
     });
   }
   
